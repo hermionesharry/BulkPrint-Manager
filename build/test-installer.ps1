@@ -25,7 +25,7 @@ $setup = Join-Path $repo 'build\installer\BulkPrintManager_Setup.exe'
 Check (Test-Path $setup) 'Installer file exists'
 $setupInfo = (Get-Item $setup).VersionInfo
 Note ("Installer size: {0:N1} MB, Company '{1}', Copyright '{2}'" -f ((Get-Item $setup).Length / 1MB), $setupInfo.CompanyName, $setupInfo.LegalCopyright)
-Check ($setupInfo.CompanyName -eq 'Harish Vaishnav') 'Installer file Company is Harish Vaishnav'
+Check ($setupInfo.CompanyName.Trim() -eq 'Harish Vaishnav') 'Installer file Company is Harish Vaishnav'
 
 # --- Install --------------------------------------------------------------------------------
 $p = Start-Process -FilePath $setup -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/ALLUSERS',
