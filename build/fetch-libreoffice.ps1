@@ -77,4 +77,4 @@ Set-Content -Path (Join-Path $Destination 'BUNDLED-VERSION.txt') -Value @(
 )
 
 $sizeMb = [math]::Round(((Get-ChildItem $Destination -Recurse | Measure-Object Length -Sum).Sum / 1MB), 1)
-Write-Host "Office engine ready: $Destination ($sizeMb MB)"
+Write-Host "::notice::Office engine LibreOffice $Version ready ($sizeMb MB)"

@@ -18,7 +18,7 @@ $failures = 0
 
 function Note([string]$text) { Write-Host $text; Add-Content -Path $log -Value $text }
 function Check([bool]$ok, [string]$what) {
-    if ($ok) { Note "PASS  $what" } else { Note "FAIL  $what"; $script:failures++ }
+    if ($ok) { Note "PASS  $what" } else { Note "FAIL  $what"; Write-Host "::error::FAIL $what"; $script:failures++ }
 }
 
 $setup = Join-Path $repo 'build\installer\BulkPrintManager_Setup.exe'
@@ -88,7 +88,10 @@ $selftest = Join-Path $results 'selftest'
 $p = Start-Process -FilePath $app -ArgumentList @('--selftest', "`"$samples`"", "`"$selftest`"") -Wait -PassThru
 $resultsFile = Join-Path $selftest 'results.txt'
 if (Test-Path $resultsFile) {
-    Get-Content $resultsFile | ForEach-Object { Note "  $_" }
+    Get-Content $resultsFile | ForEach-Object {
+        Note "  $_"
+        if ($_ -like 'FAIL*') { Write-Host "::error::Self-test $_" }
+    }
 }
 Check ($p.ExitCode -eq 0) "Program self-test passed (exit code $($p.ExitCode))"
 

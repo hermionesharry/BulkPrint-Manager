@@ -127,6 +127,24 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      - name: Save test results to the ci-test-results branch (for reviewing without downloads)
+        if: always()
+        shell: pwsh
+        run: |
+          if (-not (Test-Path build/test-results)) { exit 0 }
+          $dest = Join-Path $env:RUNNER_TEMP 'ci-results'
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          Copy-Item build/test-results/* $dest -Recurse -Force
+          Remove-Item (Join-Path $dest 'samples') -Recurse -Force -ErrorAction SilentlyContinue
+          Get-ChildItem $dest -Recurse -Directory -Filter 'data-*' | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+          Set-Location $dest
+          git init -q
+          git config user.name "BulkPrint Manager CI"
+          git config user.email "ci@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Test results for ${{ github.sha }}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/ci-test-results
+
       - name: Publish a GitHub release (only for version tags such as v1.0.0)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
