@@ -32,7 +32,7 @@ internal sealed class DocumentPrinter : IDocumentPrinter
         doc.DocumentName = item.FileName;
 
         var ps = doc.PrinterSettings;
-        ps.PrinterName = global.PrinterName;
+        ps.PrinterName = global.PrinterName ?? "";
         if (!ps.IsValid) throw new InvalidOperationException($"The printer \"{global.PrinterName}\" is not available.");
 
         if (OutputFileOverride is not null)

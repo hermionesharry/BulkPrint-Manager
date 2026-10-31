@@ -81,7 +81,7 @@ internal sealed class PreviewService : IPreviewService
             g.PageUnit = GraphicsUnit.Inch;
             g.PageScale = 0.01f; // drawing units are 1/100 inch, the same as the printer
             g.SmoothingMode = SmoothingMode.HighQuality;
-            source.Draw(g, pageIndex, layout, options.Scaling, options.Color == ColorMode.BlackAndWhite, Math.Max(ppi * 1.5f, 96f));
+            source.Draw(g, pageIndex, layout, options.Scaling, options.Color == BulkPrint.Core.Models.ColorMode.BlackAndWhite, Math.Max(ppi * 1.5f, 96f));
 
             // Show the printer's printable area as a faint dashed line.
             using var pen = new Pen(Color.FromArgb(150, 120, 140, 170), 0.8f) { DashStyle = DashStyle.Dash };

@@ -56,20 +56,20 @@ internal static class PaperCatalog
         {
             var ps = new PrinterSettings();
             if (!string.IsNullOrEmpty(printerName)) ps.PrinterName = printerName;
-            if (!ps.IsValid) return A4Fallback;
+            if (!ps.IsValid) return PaperInfo.A4Fallback;
             var page = new PageSettings(ps) { Landscape = false };
             var size = FindPaper(ps, paperName);
             if (size is not null) page.PaperSize = size;
             var paper = page.PaperSize;
             var printable = page.PrintableArea;
             float w = paper.Width, h = paper.Height;
-            if (w <= 0 || h <= 0) return A4Fallback;
+            if (w <= 0 || h <= 0) return PaperInfo.A4Fallback;
             if (printable.Width <= 0 || printable.Height <= 0) printable = new RectangleF(25, 25, w - 50, h - 50);
             return new PaperInfo(paper.PaperName, new SizeF(w, h), printable);
         }
         catch
         {
-            return A4Fallback;
+            return PaperInfo.A4Fallback;
         }
     }
 
