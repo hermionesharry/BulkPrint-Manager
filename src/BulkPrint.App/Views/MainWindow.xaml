@@ -1,0 +1,552 @@
+<Window x:Class="BulkPrint.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="clr-namespace:BulkPrint.Core.Models;assembly=BulkPrint.Core"
+        Title="BulkPrint Manager"
+        Width="1340" Height="840" MinWidth="1040" MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource AppBackgroundBrush}"
+        Foreground="{DynamicResource PrimaryTextBrush}"
+        FontFamily="{StaticResource UiFont}"
+        Icon="pack://application:,,,/Assets/BulkPrintManager.ico"
+        AllowDrop="True" DragOver="OnWindowDragOver" Drop="OnWindowDrop">
+
+    <Window.InputBindings>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding AddFilesCommand}" />
+        <KeyBinding Key="O" Modifiers="Control+Shift" Command="{Binding AddFolderCommand}" />
+        <KeyBinding Key="P" Modifiers="Control" Command="{Binding PrintAllCommand}" />
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveQueueCommand}" />
+        <KeyBinding Key="F5" Command="{Binding RefreshPrintersCommand}" />
+        <KeyBinding Key="F1" Command="{Binding AboutCommand}" />
+    </Window.InputBindings>
+
+    <DockPanel>
+        <!-- ===== Menu ===== -->
+        <Menu DockPanel.Dock="Top" Background="{DynamicResource SurfaceBrush}" Padding="6,2">
+            <MenuItem Header="_File">
+                <MenuItem Header="Add _files…" InputGestureText="Ctrl+O" Command="{Binding AddFilesCommand}" />
+                <MenuItem Header="Add f_older…" InputGestureText="Ctrl+Shift+O" Command="{Binding AddFolderCommand}" />
+                <Separator />
+                <MenuItem Header="_Open saved queue…" Command="{Binding OpenQueueCommand}" />
+                <MenuItem Header="_Save queue…" InputGestureText="Ctrl+S" Command="{Binding SaveQueueCommand}" />
+                <Separator />
+                <MenuItem Header="E_xit" Click="OnExit" />
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Remove selected" InputGestureText="Del" Command="{Binding RemoveSelectedCommand}" />
+                <MenuItem Header="Remove _duplicates" Command="{Binding RemoveDuplicatesCommand}" />
+                <MenuItem Header="_Clear queue" Command="{Binding ClearQueueCommand}" />
+                <Separator />
+                <MenuItem Header="Move _up" InputGestureText="Alt+Up" Command="{Binding MoveUpCommand}" />
+                <MenuItem Header="Move do_wn" InputGestureText="Alt+Down" Command="{Binding MoveDownCommand}" />
+                <MenuItem Header="_Sort by">
+                    <MenuItem Header="Name (A to Z)" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.NameAscending}" />
+                    <MenuItem Header="Name (Z to A)" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.NameDescending}" />
+                    <MenuItem Header="Folder and file name" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.FullPath}" />
+                    <MenuItem Header="Date modified (oldest first)" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.DateOldestFirst}" />
+                    <MenuItem Header="Date modified (newest first)" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.DateNewestFirst}" />
+                    <MenuItem Header="File type" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.FileType}" />
+                    <MenuItem Header="Size (smallest first)" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.SizeSmallestFirst}" />
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="Document _settings…" Command="{Binding EditSelectedSettingsCommand}" />
+                <MenuItem Header="Reset to _global settings" Command="{Binding ResetSelectedSettingsCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Print">
+                <MenuItem Header="_Print all" InputGestureText="Ctrl+P" Command="{Binding PrintAllCommand}" />
+                <MenuItem Header="P_ause" Command="{Binding PauseCommand}" />
+                <MenuItem Header="_Resume" Command="{Binding ResumeCommand}" />
+                <MenuItem Header="_Cancel" Command="{Binding CancelCommand}" />
+                <Separator />
+                <MenuItem Header="_Skip selected documents" Command="{Binding SkipSelectedCommand}" />
+                <MenuItem Header="Retry _failed documents" Command="{Binding RetryFailedCommand}" />
+                <MenuItem Header="Reset _statuses (print everything again)" Command="{Binding ResetStatusesCommand}" />
+                <Separator />
+                <MenuItem Header="Pre_view selected document" Command="{Binding PreviewCommand}" />
+                <MenuItem Header="Show _last report" Command="{Binding ShowLastReportCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Settings">
+                <MenuItem Header="_Refresh printers" InputGestureText="F5" Command="{Binding RefreshPrintersCommand}" />
+                <MenuItem Header="Use Windows _default printer" Command="{Binding UseDefaultPrinterCommand}" />
+                <Separator />
+                <MenuItem Header="_Load print profile…" Command="{Binding LoadProfileCommand}" />
+                <MenuItem Header="_Save print profile…" Command="{Binding SaveProfileCommand}" />
+                <Separator />
+                <MenuItem Header="_Unlock password-protected files…" Command="{Binding UnlockCommand}" />
+                <Separator />
+                <MenuItem Header="Include _subfolders when adding a folder" IsCheckable="True" IsChecked="{Binding IncludeSubfolders}" />
+                <MenuItem Header="Dar_k theme" IsCheckable="True" IsChecked="{Binding DarkTheme}" />
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="Open _log folder" Command="{Binding OpenLogFolderCommand}" />
+                <Separator />
+                <MenuItem Header="_About BulkPrint Manager" InputGestureText="F1" Command="{Binding AboutCommand}" />
+            </MenuItem>
+        </Menu>
+
+        <!-- ===== Toolbar ===== -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource CardBorderBrush}"
+                BorderThickness="0,1,0,1" Padding="10,6">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,6,0">
+                    <Image Source="pack://application:,,,/Assets/logo.png" Width="26" Height="26" />
+                    <TextBlock Text="BulkPrint Manager" FontSize="15" FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource PrimaryTextBrush}" />
+                </StackPanel>
+                <WrapPanel VerticalAlignment="Center">
+                    <Button Style="{StaticResource ToolbarButton}" Command="{Binding AddFilesCommand}" ToolTip="Add documents (Ctrl+O)" AutomationProperties.Name="Add files">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8E5;" Style="{StaticResource Icon}" Foreground="{DynamicResource AccentBrush}" />
+                            <TextBlock Text="Add Files" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButton}" Command="{Binding AddFolderCommand}" ToolTip="Add every supported document in a folder (Ctrl+Shift+O)" AutomationProperties.Name="Add folder">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8B7;" Style="{StaticResource Icon}" Foreground="{DynamicResource AccentBrush}" />
+                            <TextBlock Text="Add Folder" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <CheckBox Content="Include subfolders" IsChecked="{Binding IncludeSubfolders}" VerticalAlignment="Center" Margin="4,0,8,0" />
+                    <Border Style="{StaticResource ToolbarSeparator}" />
+                    <Button Style="{StaticResource ToolbarButton}" Command="{Binding RemoveSelectedCommand}" ToolTip="Remove the selected documents from the queue (Delete)" AutomationProperties.Name="Remove selected">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE738;" Style="{StaticResource Icon}" />
+                            <TextBlock Text="Remove" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButton}" Command="{Binding RemoveDuplicatesCommand}" ToolTip="Remove documents that are in the queue more than once" AutomationProperties.Name="Remove duplicates">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8C8;" Style="{StaticResource Icon}" />
+                            <TextBlock Text="Remove Duplicates" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButton}" Command="{Binding ClearQueueCommand}" ToolTip="Remove every document from the queue" AutomationProperties.Name="Clear queue">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE74D;" Style="{StaticResource Icon}" />
+                            <TextBlock Text="Clear Queue" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Border Style="{StaticResource ToolbarSeparator}" />
+                    <Button x:Name="SortButton" Style="{StaticResource ToolbarButton}" Click="OnSortClick" ToolTip="Sort the queue" AutomationProperties.Name="Sort">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Name (A to Z)" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.NameAscending}" />
+                                <MenuItem Header="Name (Z to A)" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.NameDescending}" />
+                                <MenuItem Header="Folder and file name" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.FullPath}" />
+                                <MenuItem Header="Date modified (oldest first)" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.DateOldestFirst}" />
+                                <MenuItem Header="Date modified (newest first)" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.DateNewestFirst}" />
+                                <MenuItem Header="File type" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.FileType}" />
+                                <MenuItem Header="Size (smallest first)" Command="{Binding SortCommand}" CommandParameter="{x:Static models:SortMode.SizeSmallestFirst}" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8CB;" Style="{StaticResource Icon}" />
+                            <TextBlock Text="Sort" Margin="6,0,4,0" VerticalAlignment="Center" />
+                            <TextBlock Text="&#xE70D;" Style="{StaticResource Icon}" FontSize="10" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButton}" Command="{Binding MoveUpCommand}" ToolTip="Move selected up (Alt+Up)" AutomationProperties.Name="Move up">
+                        <TextBlock Text="&#xE74A;" Style="{StaticResource Icon}" />
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButton}" Command="{Binding MoveDownCommand}" ToolTip="Move selected down (Alt+Down)" AutomationProperties.Name="Move down">
+                        <TextBlock Text="&#xE74B;" Style="{StaticResource Icon}" />
+                    </Button>
+                    <Border Style="{StaticResource ToolbarSeparator}" />
+                    <Button Style="{StaticResource ToolbarButton}" Command="{Binding LoadProfileCommand}" ToolTip="Load saved printer and print settings" AutomationProperties.Name="Load profile">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8E5;" Style="{StaticResource Icon}" />
+                            <TextBlock Text="Load Profile" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButton}" Command="{Binding SaveProfileCommand}" ToolTip="Save the current printer and print settings as a profile" AutomationProperties.Name="Save profile">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE74E;" Style="{StaticResource Icon}" />
+                            <TextBlock Text="Save Profile" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </WrapPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ===== Status bar with developer credit ===== -->
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource CardBorderBrush}"
+                BorderThickness="0,1,0,0" Padding="14,5">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Text="Designed and Developed by Harish Vaishnav" Style="{StaticResource CreditText}"
+                           VerticalAlignment="Center" AutomationProperties.Name="Designed and Developed by Harish Vaishnav" />
+                <TextBlock DockPanel.Dock="Right" Text="{Binding QueueSummary}" Style="{StaticResource CreditText}" Margin="0,0,28,0" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}"
+                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip="{Binding StatusMessage}" />
+            </DockPanel>
+        </Border>
+
+        <!-- ===== Print action bar ===== -->
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource CardBorderBrush}"
+                BorderThickness="0,1,0,0" Padding="16,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button Style="{StaticResource PrimaryButton}" Command="{Binding PrintAllCommand}" Padding="26,10" FontSize="15"
+                        ToolTip="Print every pending document in the queue (Ctrl+P)" AutomationProperties.Name="Print all">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE749;" Style="{StaticResource Icon}" FontSize="17" Foreground="{DynamicResource OnAccentBrush}" />
+                        <TextBlock Text="Print All" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource OnAccentBrush}" />
+                    </StackPanel>
+                </Button>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding PauseCommand}" Margin="0,0,8,0"
+                            Visibility="{Binding IsPaused, Converter={StaticResource InverseBoolToVisibility}}"
+                            ToolTip="Pause after the current document" AutomationProperties.Name="Pause">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE769;" Style="{StaticResource Icon}" />
+                            <TextBlock Text="Pause" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding ResumeCommand}" Margin="0,0,8,0"
+                            Visibility="{Binding IsPaused, Converter={StaticResource BoolToVisibility}}"
+                            AutomationProperties.Name="Resume">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE768;" Style="{StaticResource Icon}" Foreground="{DynamicResource SuccessBrush}" />
+                            <TextBlock Text="Resume" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" ToolTip="Stop printing. Unprinted documents stay in the queue." AutomationProperties.Name="Cancel printing">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE71A;" Style="{StaticResource Icon}" Foreground="{DynamicResource ErrorBrush}" />
+                            <TextBlock Text="Cancel" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Margin="20,0" VerticalAlignment="Center">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding EtaText}" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Text="{Binding ProgressText}" FontSize="12.5" Foreground="{DynamicResource PrimaryTextBrush}" TextTrimming="CharacterEllipsis" />
+                    </DockPanel>
+                    <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}" Maximum="100" Height="6" Margin="0,7,0,0"
+                                 Foreground="{DynamicResource AccentBrush}" AutomationProperties.Name="Batch progress" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE749;" Style="{StaticResource Icon}" Foreground="{DynamicResource SecondaryTextBrush}" />
+                    <TextBlock Text="{Binding SelectedPrinter}" Margin="6,0,0,0" MaxWidth="260" TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ===== Main area ===== -->
+        <Grid Margin="14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="520" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="372" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Queue card -->
+            <Border Style="{StaticResource Card}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Margin="16,12,12,8">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Style="{StaticResource ToolbarButton}" Command="{Binding PreviewCommand}" ToolTip="Preview the selected document" AutomationProperties.Name="Preview">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE890;" Style="{StaticResource Icon}" />
+                                    <TextBlock Text="Preview" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource ToolbarButton}" Command="{Binding EditSelectedSettingsCommand}" ToolTip="Give the selected documents their own copies, pages, sides or colour" AutomationProperties.Name="Document settings">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE713;" Style="{StaticResource Icon}" />
+                                    <TextBlock Text="Document Settings" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource ToolbarButton}" Command="{Binding SkipSelectedCommand}" ToolTip="Do not print the selected documents" AutomationProperties.Name="Skip selected">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE893;" Style="{StaticResource Icon}" />
+                                    <TextBlock Text="Skip" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Print queue" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <TextBlock Text="{Binding QueueSummary}" Style="{StaticResource MutedText}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </DockPanel>
+
+                    <DataGrid x:Name="QueueGrid" Grid.Row="1" Margin="8,0,8,8"
+                              ItemsSource="{Binding Documents}"
+                              AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                              CanUserSortColumns="False" CanUserReorderColumns="False" CanUserResizeColumns="True"
+                              SelectionMode="Extended" SelectionUnit="FullRow" HeadersVisibility="Column"
+                              GridLinesVisibility="None" BorderThickness="0" Background="Transparent"
+                              RowHeight="34" IsReadOnly="{Binding IsPrinting}"
+                              EnableRowVirtualization="True" EnableColumnVirtualization="True"
+                              VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                              ScrollViewer.CanContentScroll="True"
+                              AllowDrop="True"
+                              SelectionChanged="OnSelectionChanged"
+                              PreviewMouseLeftButtonDown="OnGridMouseDown"
+                              PreviewMouseLeftButtonUp="OnGridMouseUp"
+                              PreviewMouseMove="OnGridMouseMove"
+                              DragOver="OnGridDragOver" Drop="OnGridDrop"
+                              MouseDoubleClick="OnGridDoubleClick"
+                              CellEditEnding="OnCellEditEnding"
+                              AutomationProperties.Name="Print queue">
+                        <DataGrid.InputBindings>
+                            <KeyBinding Key="Delete" Command="{Binding RemoveSelectedCommand}" />
+                            <KeyBinding Key="Up" Modifiers="Alt" Command="{Binding MoveUpCommand}" />
+                            <KeyBinding Key="Down" Modifiers="Alt" Command="{Binding MoveDownCommand}" />
+                        </DataGrid.InputBindings>
+                        <DataGrid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Preview" Command="{Binding PreviewCommand}" />
+                                <MenuItem Header="Document settings…" Command="{Binding EditSelectedSettingsCommand}" />
+                                <MenuItem Header="Reset to global settings" Command="{Binding ResetSelectedSettingsCommand}" />
+                                <Separator />
+                                <MenuItem Header="Skip" Command="{Binding SkipSelectedCommand}" />
+                                <MenuItem Header="Move up" Command="{Binding MoveUpCommand}" />
+                                <MenuItem Header="Move down" Command="{Binding MoveDownCommand}" />
+                                <Separator />
+                                <MenuItem Header="Remove from queue" Command="{Binding RemoveSelectedCommand}" />
+                            </ContextMenu>
+                        </DataGrid.ContextMenu>
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Width="30" CanUserResize="False" IsReadOnly="True">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="&#xE713;" Style="{StaticResource Icon}" FontSize="13" HorizontalAlignment="Center"
+                                                   Foreground="{DynamicResource AccentBrush}" ToolTip="{Binding SettingsSummary}"
+                                                   Visibility="{Binding HasCustomSettings, Converter={StaticResource BoolToVisibility}}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Document" Width="3*" MinWidth="160" IsReadOnly="True">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding FileName}" ToolTip="{Binding Path}" TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center" Margin="4,0" Foreground="{DynamicResource PrimaryTextBrush}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Type" Binding="{Binding TypeLabel}" Width="120" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Size" Binding="{Binding SizeText}" Width="80" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Pages" Binding="{Binding PagesText}" Width="62" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Copies" Binding="{Binding Copies, UpdateSourceTrigger=LostFocus}" Width="68" />
+                            <DataGridTemplateColumn Header="Status" Width="1.4*" MinWidth="120" IsReadOnly="True">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding StatusText}" Margin="4,0" TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource StatusText}">
+                                                    <Setter Property="ToolTip" Value="{Binding StatusDetail}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding StatusDetail}" Value="">
+                                                            <Setter Property="ToolTip" Value="{x:Null}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Empty state: drag-and-drop area -->
+                    <Border Grid.Row="1" Margin="16,4,16,16" Background="{DynamicResource DropZoneBrush}" CornerRadius="10"
+                            Visibility="{Binding IsQueueEmpty, Converter={StaticResource BoolToVisibility}}" AllowDrop="True">
+                        <Grid>
+                            <Rectangle RadiusX="10" RadiusY="10" Stroke="{DynamicResource DropZoneBorderBrush}" StrokeThickness="1.5" StrokeDashArray="5 4" />
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="480">
+                                <TextBlock Text="&#xE898;" Style="{StaticResource Icon}" FontSize="44" HorizontalAlignment="Center"
+                                           Foreground="{DynamicResource AccentBrush}" />
+                                <TextBlock Text="Drag and drop documents or folders here" FontSize="18" FontWeight="SemiBold" Margin="0,14,0,0"
+                                           HorizontalAlignment="Center" Foreground="{DynamicResource PrimaryTextBrush}" />
+                                <TextBlock Style="{StaticResource MutedText}" TextAlignment="Center" Margin="0,8,0,0"
+                                           Text="Add hundreds or thousands of PDF, Word, Excel, PowerPoint, image and text files, choose your printer and settings on the right, then click Print All." />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,18,0,0">
+                                    <Button Content="Add Files" Style="{StaticResource PrimaryButton}" Command="{Binding AddFilesCommand}" Margin="0,0,10,0" />
+                                    <Button Content="Add Folder" Style="{StaticResource SecondaryButton}" Command="{Binding AddFolderCommand}" />
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource MutedText}" TextAlignment="Center" Margin="0,16,0,0" FontSize="11.5"
+                                           Text="PDF · DOC · DOCX · RTF · XLS · XLSX · CSV · PPT · PPTX · JPG · PNG · BMP · TIFF · TXT" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Settings panel -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    <StackPanel IsEnabled="{Binding CanEditSettings}">
+
+                        <!-- Printer -->
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Printer" Style="{StaticResource CardTitle}" />
+                                <ComboBox ItemsSource="{Binding Printers}" SelectedItem="{Binding SelectedPrinter}" AutomationProperties.Name="Printer" />
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding RefreshPrintersCommand}" Padding="10,5" Margin="0,0,8,0" ToolTip="Look for printers again (F5)">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE72C;" Style="{StaticResource Icon}" FontSize="13" />
+                                            <TextBlock Text="Refresh" Margin="6,0,0,0" FontSize="12.5" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding UseDefaultPrinterCommand}" Padding="10,5" ToolTip="Select the Windows default printer">
+                                        <TextBlock Text="Use default printer" FontSize="12.5" />
+                                    </Button>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Ellipse Width="9" Height="9" VerticalAlignment="Center">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="{DynamicResource SuccessBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding PrinterHasProblem}" Value="True">
+                                                        <Setter Property="Fill" Value="{DynamicResource ErrorBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <TextBlock Text="{Binding PrinterStatusText}" Style="{StaticResource MutedText}" Margin="8,0,0,0" MaxWidth="300" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Paper and layout -->
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Paper and layout" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="Paper size" Style="{StaticResource FieldLabel}" Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding PaperSizes}" SelectedItem="{Binding Global.PaperSizeName}" AutomationProperties.Name="Paper size" />
+                                <TextBlock Text="Paper source / tray" Style="{StaticResource FieldLabel}" />
+                                <ComboBox ItemsSource="{Binding PaperSources}" SelectedItem="{Binding Global.PaperSourceName}" AutomationProperties.Name="Paper source" />
+                                <TextBlock Text="Orientation" Style="{StaticResource FieldLabel}" />
+                                <ComboBox ItemsSource="{Binding OrientationChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                          SelectedValue="{Binding Global.Orientation}" AutomationProperties.Name="Orientation"
+                                          ToolTip="Automatic turns each page to match its shape" />
+                                <TextBlock Text="Scaling" Style="{StaticResource FieldLabel}" />
+                                <ComboBox ItemsSource="{Binding ScalingChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                          SelectedValue="{Binding Global.Scaling}" AutomationProperties.Name="Scaling" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Pages and copies -->
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Pages and copies" Style="{StaticResource CardTitle}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Copies" Style="{StaticResource FieldLabel}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding Global.Copies, UpdateSourceTrigger=LostFocus}" AutomationProperties.Name="Copies of each document" />
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1" Content="Collate copies" IsChecked="{Binding Global.Collate}" VerticalAlignment="Bottom" Margin="14,0,0,6"
+                                              ToolTip="Collated: 1,2,3, 1,2,3. Uncollated: 1,1, 2,2, 3,3" />
+                                </Grid>
+                                <TextBlock Text="Pages to print" Style="{StaticResource FieldLabel}" />
+                                <ComboBox ItemsSource="{Binding PageSelectionChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                          SelectedValue="{Binding Global.PageSelection}" AutomationProperties.Name="Pages to print" />
+                                <StackPanel Visibility="{Binding Global.IsRangeSelection, Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="Page range, for example 1-3, 5, 8-" Style="{StaticResource FieldLabel}" />
+                                    <TextBox Text="{Binding Global.PageRange, UpdateSourceTrigger=PropertyChanged, Delay=300}" AutomationProperties.Name="Page range" />
+                                    <TextBlock Text="{Binding GlobalRangeError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
+                                               Visibility="{Binding GlobalRangeError, Converter={StaticResource HasValueToVisibility}}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Sides, colour, quality -->
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Sides, colour and quality" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="Sides" Style="{StaticResource FieldLabel}" Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding DuplexChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                          SelectedValue="{Binding Global.Duplex}" IsEnabled="{Binding SupportsDuplex}"
+                                          AutomationProperties.Name="Sides" ToolTipService.ShowOnDisabled="True" ToolTip="{Binding DuplexTip}" />
+                                <TextBlock Text="Colour" Style="{StaticResource FieldLabel}" />
+                                <ComboBox ItemsSource="{Binding ColorChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                          SelectedValue="{Binding Global.Color}" IsEnabled="{Binding SupportsColor}"
+                                          AutomationProperties.Name="Colour" ToolTipService.ShowOnDisabled="True" ToolTip="{Binding ColorTip}" />
+                                <TextBlock Text="Print quality" Style="{StaticResource FieldLabel}" />
+                                <ComboBox ItemsSource="{Binding QualityChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                          SelectedValue="{Binding Global.Quality}" AutomationProperties.Name="Print quality" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Batch options -->
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Batch options" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="Separator page between documents" Style="{StaticResource FieldLabel}" Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding SeparatorChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                          SelectedValue="{Binding Global.Separator}" AutomationProperties.Name="Separator page" />
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="12" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Delay between documents (s)" Style="{StaticResource FieldLabel}" TextWrapping="Wrap" />
+                                        <TextBox Text="{Binding Global.DelayBetweenDocumentsSeconds, UpdateSourceTrigger=LostFocus}" AutomationProperties.Name="Delay between documents in seconds" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Max jobs waiting at printer" Style="{StaticResource FieldLabel}" TextWrapping="Wrap"
+                                                   ToolTip="BulkPrint Manager waits when the printer queue already has this many jobs. 0 means no limit." />
+                                        <TextBox Text="{Binding Global.MaxJobsInPrinterQueue, UpdateSourceTrigger=LostFocus}" AutomationProperties.Name="Maximum jobs waiting at the printer" />
+                                    </StackPanel>
+                                </Grid>
+                                <CheckBox Content="Let the printer make the copies (faster)" IsChecked="{Binding Global.UsePrinterCopies}" Margin="0,12,0,0"
+                                          ToolTip="Sends each document once and asks the printer driver to make the copies. Leave off if your printer ignores copy settings." />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Selected document -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Selected document" Style="{StaticResource CardTitle}" />
+                            <Border Background="{DynamicResource PreviewBackdropBrush}" CornerRadius="8" Height="250" Padding="10">
+                                <Grid>
+                                    <Image Source="{Binding Thumbnail}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality">
+                                        <Image.Effect>
+                                            <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.25" />
+                                        </Image.Effect>
+                                    </Image>
+                                    <TextBlock Text="{Binding ThumbnailMessage}" Style="{StaticResource MutedText}" TextAlignment="Center"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12"
+                                               Visibility="{Binding Thumbnail, Converter={StaticResource NoValueToVisibility}}" />
+                                </Grid>
+                            </Border>
+                            <TextBlock Text="{Binding ThumbnailMessage}" Style="{StaticResource MutedText}" Margin="0,8,0,0"
+                                       Visibility="{Binding Thumbnail, Converter={StaticResource HasValueToVisibility}}" />
+                            <TextBlock Text="{Binding SelectionSummary}" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button Content="Preview" Style="{StaticResource SecondaryButton}" Command="{Binding PreviewCommand}" Margin="0,0,8,0" />
+                                <Button Content="Document settings…" Style="{StaticResource SecondaryButton}" Command="{Binding EditSelectedSettingsCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </DockPanel>
+</Window>

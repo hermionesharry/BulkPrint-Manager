@@ -1,0 +1,61 @@
+<Window x:Class="BulkPrint.App.Views.PreviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Print preview"
+        Width="820" Height="900" MinWidth="520" MinHeight="480"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource AppBackgroundBrush}"
+        Icon="pack://application:,,,/Assets/BulkPrintManager.ico"
+        KeyDown="OnKeyDown">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,0,0,1" Padding="18,12">
+            <StackPanel>
+                <TextBlock x:Name="FileText" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" TextTrimming="CharacterEllipsis" />
+                <TextBlock x:Name="DescriptionText" Style="{StaticResource MutedText}" Margin="0,3,0,0" />
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Background="{DynamicResource PreviewBackdropBrush}">
+            <Grid>
+                <!-- The page scales to fit the window, keeping its proportions. -->
+                <Border HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24" Background="White">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.3" />
+                    </Border.Effect>
+                    <Image x:Name="PageImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                </Border>
+                <StackPanel x:Name="BusyPanel" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                    <ProgressBar IsIndeterminate="True" Width="220" Height="4" />
+                    <TextBlock x:Name="BusyText" Text="Preparing preview…" Margin="0,10,0,0" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource SecondaryTextBrush}" />
+                </StackPanel>
+                <TextBlock x:Name="ErrorText" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="460" TextAlignment="Center"
+                           TextWrapping="Wrap" FontSize="14" Foreground="{DynamicResource SecondaryTextBrush}" Visibility="Collapsed" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,1,0,0" Padding="18,10">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="Close" Style="{StaticResource PrimaryButton}" IsCancel="True" Click="OnClose" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="PrevButton" Style="{StaticResource SecondaryButton}" Click="OnPrevious" AutomationProperties.Name="Previous page" ToolTip="Previous page (Left arrow)">
+                        <TextBlock Text="&#xE76B;" Style="{StaticResource Icon}" />
+                    </Button>
+                    <TextBlock x:Name="PageText" Margin="12,0" MinWidth="130" TextAlignment="Center" VerticalAlignment="Center"
+                               Foreground="{DynamicResource PrimaryTextBrush}" />
+                    <Button x:Name="NextButton" Style="{StaticResource SecondaryButton}" Click="OnNext" AutomationProperties.Name="Next page" ToolTip="Next page (Right arrow)">
+                        <TextBlock Text="&#xE76C;" Style="{StaticResource Icon}" />
+                    </Button>
+                    <TextBlock Text="The dashed line shows the printer's printable area." Style="{StaticResource MutedText}"
+                               Margin="18,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

@@ -1,0 +1,71 @@
+<Window x:Class="BulkPrint.App.Views.DocumentSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Document print settings"
+        Width="460" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False"
+        Background="{DynamicResource AppBackgroundBrush}"
+        Icon="pack://application:,,,/Assets/BulkPrintManager.ico">
+    <StackPanel Margin="24">
+        <TextBlock x:Name="HeaderText" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" />
+        <TextBlock Text="These settings replace the global settings for the selected documents only."
+                   Style="{StaticResource MutedText}" Margin="0,4,0,8" />
+
+        <Border Style="{StaticResource Card}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Copies" Style="{StaticResource FieldLabel}" Margin="0,0,0,4" />
+                <TextBox Grid.Row="1" Text="{Binding Options.Copies, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Copies" />
+                <CheckBox Grid.Row="1" Grid.Column="2" Content="Collate copies" IsChecked="{Binding Options.Collate}" VerticalAlignment="Center" />
+
+                <TextBlock Grid.Row="2" Text="Pages" Style="{StaticResource FieldLabel}" />
+                <ComboBox Grid.Row="3" ItemsSource="{Binding PageSelectionChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                          SelectedValue="{Binding Options.PageSelection}" AutomationProperties.Name="Pages" />
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="Page range (e.g. 1-3, 5, 8-)" Style="{StaticResource FieldLabel}" />
+                <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding Options.PageRange, UpdateSourceTrigger=PropertyChanged}"
+                         IsEnabled="{Binding Options.IsRangeSelection}" AutomationProperties.Name="Page range" />
+
+                <TextBlock Grid.Row="4" Text="Orientation" Style="{StaticResource FieldLabel}" />
+                <ComboBox Grid.Row="5" ItemsSource="{Binding OrientationChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                          SelectedValue="{Binding Options.Orientation}" AutomationProperties.Name="Orientation" />
+                <TextBlock Grid.Row="4" Grid.Column="2" Text="Scaling" Style="{StaticResource FieldLabel}" />
+                <ComboBox Grid.Row="5" Grid.Column="2" ItemsSource="{Binding ScalingChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                          SelectedValue="{Binding Options.Scaling}" AutomationProperties.Name="Scaling" />
+
+                <TextBlock Grid.Row="6" Text="Sides" Style="{StaticResource FieldLabel}" />
+                <ComboBox Grid.Row="7" ItemsSource="{Binding DuplexChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                          SelectedValue="{Binding Options.Duplex}" IsEnabled="{Binding SupportsDuplex}" AutomationProperties.Name="Sides"
+                          ToolTipService.ShowOnDisabled="True" ToolTip="{Binding DuplexTip}" />
+                <TextBlock Grid.Row="6" Grid.Column="2" Text="Colour" Style="{StaticResource FieldLabel}" />
+                <ComboBox Grid.Row="7" Grid.Column="2" ItemsSource="{Binding ColorChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                          SelectedValue="{Binding Options.Color}" IsEnabled="{Binding SupportsColor}" AutomationProperties.Name="Colour"
+                          ToolTipService.ShowOnDisabled="True" ToolTip="{Binding ColorTip}" />
+            </Grid>
+        </Border>
+
+        <TextBlock x:Name="ErrorText" Foreground="{DynamicResource ErrorBrush}" Margin="0,8,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
+
+        <DockPanel Margin="0,18,0,0">
+            <Button Content="Reset to global settings" DockPanel.Dock="Left" Style="{StaticResource SecondaryButton}" Click="OnReset" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancel" Style="{StaticResource SecondaryButton}" IsCancel="True" Margin="0,0,8,0" />
+                <Button x:Name="ApplyButton" Style="{StaticResource PrimaryButton}" IsDefault="True" Click="OnApply" />
+            </StackPanel>
+        </DockPanel>
+    </StackPanel>
+</Window>

@@ -1,0 +1,26 @@
+<Window x:Class="BulkPrint.App.Views.ProfileWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Print profiles"
+        Width="440" Height="420"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False"
+        Background="{DynamicResource AppBackgroundBrush}"
+        Icon="pack://application:,,,/Assets/BulkPrintManager.ico">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="Choose a saved profile to load its printer and print settings." Style="{StaticResource BodyText}" />
+        <ListBox x:Name="Profiles" Grid.Row="1" Margin="0,12,0,0" MouseDoubleClick="OnLoad"
+                 AutomationProperties.Name="Saved profiles" />
+        <DockPanel Grid.Row="2" Margin="0,16,0,0">
+            <Button Content="Delete" DockPanel.Dock="Left" Style="{StaticResource SecondaryButton}" Click="OnDelete" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancel" Style="{StaticResource SecondaryButton}" IsCancel="True" Margin="0,0,8,0" />
+                <Button Content="Load" Style="{StaticResource PrimaryButton}" IsDefault="True" Click="OnLoad" />
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

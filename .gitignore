@@ -1,0 +1,8 @@
+bin/
+obj/
+.vs/
+*.user
+build/publish/
+build/installer/
+build/test-results/
+build/asset-preview.png

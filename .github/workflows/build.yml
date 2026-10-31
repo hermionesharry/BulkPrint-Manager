@@ -1,0 +1,138 @@
+# Builds BulkPrintManager_Setup.exe on a clean Windows machine provided by GitHub,
+# installs it, tests it, and publishes the installer as a downloadable artifact.
+# BulkPrint Manager: Designed and Developed by Harish Vaishnav.
+
+name: Build BulkPrint Manager installer
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      include_office_engine:
+        description: 'Bundle the offline Office engine (needed to print Word, Excel and PowerPoint files)'
+        type: boolean
+        default: true
+      libreoffice_version:
+        description: 'Office engine (LibreOffice) version, for example 25.2.6. Leave empty for the current stable release.'
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build, install and test (Windows x64)
+    runs-on: windows-2022
+    timeout-minutes: 120
+    env:
+      DOTNET_NOLOGO: 1
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      INCLUDE_OFFICE: ${{ github.event_name != 'workflow_dispatch' || inputs.include_office_engine }}
+      # Optional code signing: add the repository secrets SIGNING_CERT_BASE64 (a .pfx file, base64) and SIGNING_CERT_PASSWORD.
+      HAS_SIGNING_CERT: ${{ secrets.SIGNING_CERT_BASE64 != '' }}
+
+    steps:
+      - name: Get the source code
+        uses: actions/checkout@v4
+
+      - name: Install .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Work out the version number
+        id: version
+        shell: pwsh
+        run: |
+          $v = '1.0.0'
+          if ('${{ github.ref_type }}' -eq 'tag' -and '${{ github.ref_name }}' -match '^v(\d+\.\d+\.\d+)$') { $v = $Matches[1] }
+          "value=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "Version $v"
+
+      - name: Test the core logic
+        run: dotnet run --project tests/BulkPrint.Core.SelfTest -c Release
+
+      - name: Build the app (self-contained, no .NET install needed on user PCs)
+        shell: pwsh
+        run: |
+          $v = '${{ steps.version.outputs.value }}'
+          dotnet publish src/BulkPrint.App/BulkPrint.App.csproj -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true -p:Version=$v -p:AssemblyVersion="$v.0" -p:FileVersion="$v.0" -o build/publish
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item THIRD-PARTY-NOTICES.txt build/publish/
+          Copy-Item docs/USER-GUIDE.md build/publish/USER-GUIDE.md
+          Get-ChildItem build/publish | Format-Table Name, Length
+
+      - name: Bundle the offline Office engine
+        if: env.INCLUDE_OFFICE == 'true'
+        shell: pwsh
+        run: ./build/fetch-libreoffice.ps1 -Destination build/publish/engine -Version '${{ inputs.libreoffice_version }}'
+
+      - name: Sign the program (only if a code-signing certificate is configured)
+        if: env.HAS_SIGNING_CERT == 'true'
+        shell: pwsh
+        env:
+          SIGNING_CERT_BASE64: ${{ secrets.SIGNING_CERT_BASE64 }}
+          SIGNING_CERT_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+        run: ./build/sign.ps1 build/publish/BulkPrintManager.exe
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Build BulkPrintManager_Setup.exe
+        shell: pwsh
+        run: |
+          $iscc = Get-ChildItem "${env:ProgramFiles(x86)}", "$env:ProgramFiles" -Recurse -Filter ISCC.exe -ErrorAction SilentlyContinue |
+                  Where-Object { $_.FullName -like '*Inno Setup*' } | Select-Object -First 1
+          if (-not $iscc) { throw 'Inno Setup compiler (ISCC.exe) not found' }
+          & $iscc.FullName "/DAppVersion=${{ steps.version.outputs.value }}" installer/BulkPrintManager.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Item build/installer/BulkPrintManager_Setup.exe | Format-List Name, Length
+
+      - name: Sign the installer (only if a code-signing certificate is configured)
+        if: env.HAS_SIGNING_CERT == 'true'
+        shell: pwsh
+        env:
+          SIGNING_CERT_BASE64: ${{ secrets.SIGNING_CERT_BASE64 }}
+          SIGNING_CERT_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+        run: ./build/sign.ps1 build/installer/BulkPrintManager_Setup.exe
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: BulkPrintManager_Setup
+          path: build/installer/BulkPrintManager_Setup.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Install and test on this clean Windows machine
+        shell: pwsh
+        run: ./build/test-installer.ps1
+
+      - name: Upload test results (previews, printed PDFs, reports)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/test-results
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish a GitHub release (only for version tags such as v1.0.0)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/installer/BulkPrintManager_Setup.exe
+          name: BulkPrint Manager ${{ steps.version.outputs.value }}
+          body: |
+            BulkPrint Manager ${{ steps.version.outputs.value }}, Designed and Developed by Harish Vaishnav.
+            Download BulkPrintManager_Setup.exe, double-click it and follow the steps.

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Platform-independent logic: models, queue engine, view models, storage, reports.
+       Has no NuGet dependencies so it can be built and tested anywhere. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>BulkPrint.Core</RootNamespace>
+    <AssemblyName>BulkPrint.Core</AssemblyName>
+    <AssemblyTitle>BulkPrint Manager Core</AssemblyTitle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Shown in the About dialog. -->
+    <AssemblyMetadata Include="BuildDate" Value="$([System.DateTime]::UtcNow.ToString('dd MMM yyyy'))" />
+  </ItemGroup>
+
+</Project>

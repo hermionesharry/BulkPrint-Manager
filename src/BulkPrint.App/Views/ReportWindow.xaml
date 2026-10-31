@@ -1,0 +1,78 @@
+<Window x:Class="BulkPrint.App.Views.ReportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Print report"
+        Width="820" Height="620" MinWidth="600" MinHeight="420"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource AppBackgroundBrush}"
+        Icon="pack://application:,,,/Assets/BulkPrintManager.ico">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock x:Name="HeadlineText" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" TextWrapping="Wrap" />
+
+        <UniformGrid Grid.Row="1" Rows="1" Margin="0,16,0,16">
+            <Border Style="{StaticResource Card}" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="Printed" Style="{StaticResource MutedText}" />
+                    <TextBlock x:Name="PrintedText" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}" Margin="4,0">
+                <StackPanel>
+                    <TextBlock Text="Failed" Style="{StaticResource MutedText}" />
+                    <TextBlock x:Name="FailedText" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource ErrorBrush}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}" Margin="4,0">
+                <StackPanel>
+                    <TextBlock Text="Skipped / not printed" Style="{StaticResource MutedText}" />
+                    <TextBlock x:Name="SkippedText" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}" Margin="8,0,0,0">
+                <StackPanel>
+                    <TextBlock Text="Pages sent" Style="{StaticResource MutedText}" />
+                    <TextBlock x:Name="PagesText" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <DockPanel Grid.Row="2">
+            <TextBlock x:Name="DetailsText" DockPanel.Dock="Top" Style="{StaticResource MutedText}" Margin="0,0,0,10" />
+            <DataGrid x:Name="EntriesGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal" CanUserAddRows="False" SelectionMode="Extended"
+                      EnableRowVirtualization="True" AutomationProperties.Name="Documents in this batch">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Document" Binding="{Binding FileName}" Width="2*" />
+                    <DataGridTemplateColumn Header="Status" Width="110" SortMemberPath="StatusText">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding StatusText}" Style="{StaticResource StatusText}" Margin="4,0" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Pages" Binding="{Binding PagesSent}" Width="70" />
+                    <DataGridTextColumn Header="Time" Binding="{Binding DurationText}" Width="70" />
+                    <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="3*" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
+
+        <DockPanel Grid.Row="3" Margin="0,16,0,0">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <Button Content="Export CSV…" Style="{StaticResource SecondaryButton}" Click="OnExportCsv" Margin="0,0,8,0" />
+                <Button Content="Export PDF…" Style="{StaticResource SecondaryButton}" Click="OnExportPdf" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="RetryButton" Content="Print failed documents again" Style="{StaticResource SecondaryButton}" Click="OnRetry" Margin="0,0,8,0" />
+                <Button Content="Close" Style="{StaticResource PrimaryButton}" IsDefault="True" IsCancel="True" Click="OnClose" />
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

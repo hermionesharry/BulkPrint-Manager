@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- Windows 10 SDK target gives access to Windows.Data.Pdf, the PDF renderer built into Windows 10 and 11. -->
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <!-- Needed for System.Drawing.Printing (the Windows print spooler API). -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>BulkPrintManager</AssemblyName>
+    <RootNamespace>BulkPrint.App</RootNamespace>
+    <AssemblyTitle>BulkPrint Manager — Bulk Document Printing</AssemblyTitle>
+    <ApplicationIcon>..\..\assets\BulkPrintManager.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <NoWarn>$(NoWarn);WPF0001;CA1416</NoWarn>
+    <!-- Implicit usings would import Windows Forms and System.Drawing into every file and clash with WPF
+         names (Application, MessageBox, Point...). The common usings are listed in GlobalUsings.cs instead. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+
+    <!-- Self-contained: the .NET runtime is bundled, nothing has to be installed on the PC. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>embedded</DebugType>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <ProjectReference Include="..\BulkPrint.Core\BulkPrint.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="..\..\assets\BulkPrintManager.ico" Link="Assets\BulkPrintManager.ico" />
+    <Resource Include="..\..\assets\logo-256.png" Link="Assets\logo.png" />
+  </ItemGroup>
+
+</Project>
