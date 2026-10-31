@@ -65,6 +65,9 @@ base64-encoded) and `SIGNING_CERT_PASSWORD`.
 - **Print settings:** copies, collated or uncollated, all pages, page ranges (`1-3, 5, 8-`), odd or even pages,
   single or double-sided (long or short edge), portrait, landscape or automatic per page, fit to page,
   actual size, scale to fit paper. Global settings plus per-document overrides (marked with a gear icon).
+- **Save print output (On/Off):** with *Microsoft Print to PDF* and other save-to-file printers, every document
+  is saved automatically to a folder under its own name; no "Save As" box per document.
+- **Print without pop-ups:** the whole batch runs in one go with no confirmation, questions or report window.
 - **Batch control:** Print All, pause, resume, cancel, skip a document, retry failed documents, optional delay and
   separator page between documents, waits if the printer queue is full, pauses itself when the printer reports a problem.
 - **Safe queue:** the queue is saved automatically. After a crash or restart, BulkPrint Manager offers to resume the unfinished batch.

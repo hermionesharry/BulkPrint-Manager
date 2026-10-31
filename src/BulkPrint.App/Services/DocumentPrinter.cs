@@ -22,7 +22,7 @@ internal sealed class DocumentPrinter : IDocumentPrinter
     public Func<DocumentItem, string>? OutputFileOverride { get; set; }
 
     public PrintOutcome Print(DocumentItem item, DocumentPrintOptions o, GlobalPrintSettings global, bool separatorBefore,
-        IPrintProgressSink progress, CancellationToken ct)
+        string? outputFile, IPrintProgressSink progress, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         if (!File.Exists(item.Path)) throw new FileNotFoundException("File not found", item.Path);
@@ -35,10 +35,12 @@ internal sealed class DocumentPrinter : IDocumentPrinter
         ps.PrinterName = global.PrinterName ?? "";
         if (!ps.IsValid) throw new InvalidOperationException($"The printer \"{global.PrinterName}\" is not available.");
 
-        if (OutputFileOverride is not null)
+        // Save Print Output: give the file name ourselves so Windows never shows "Save Print Output As".
+        outputFile ??= OutputFileOverride?.Invoke(item);
+        if (outputFile is not null)
         {
             ps.PrintToFile = true;
-            ps.PrintFileName = OutputFileOverride(item);
+            ps.PrintFileName = outputFile;
         }
 
         var page = doc.DefaultPageSettings;
@@ -173,7 +175,7 @@ internal sealed class DocumentPrinter : IDocumentPrinter
         if (!page.Color && wantColor && !ps.SupportsColor)
             warnings.Add("Printed in black and white: this printer does not support colour.");
 
-        return new PrintOutcome(pagesSent, warnings.Count == 0 ? null : string.Join(" ", warnings));
+        return new PrintOutcome(pagesSent, warnings.Count == 0 ? null : string.Join(" ", warnings), outputFile);
     }
 
     /// <summary>Paper and printable area in the coordinates of the printer Graphics (origin at the hard margin).</summary>

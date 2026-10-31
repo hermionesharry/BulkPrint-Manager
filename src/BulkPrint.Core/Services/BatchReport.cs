@@ -17,6 +17,9 @@ public sealed class BatchReport
     public DateTime StartTime { get; init; }
     public DateTime EndTime { get; set; }
     public bool WasCancelled { get; set; }
+
+    /// <summary>Folder where print output was saved (Save Print Output = On), otherwise null.</summary>
+    public string? OutputFolder { get; set; }
     public List<ReportEntry> Entries { get; } = new();
 
     public int TotalDocuments => Entries.Count;
@@ -51,6 +54,7 @@ public sealed class BatchReport
         yield return $"Finished: {EndTime:dd MMM yyyy, HH:mm:ss}  (duration {DurationText})";
         yield return $"Documents: {TotalDocuments}  ·  Printed: {Printed}  ·  Skipped: {Skipped}  ·  Failed: {Failed}";
         yield return $"Pages sent to printer: {TotalPages}";
+        if (OutputFolder is not null) yield return $"Print output saved in: {OutputFolder}";
     }
 
     public string ToCsv()

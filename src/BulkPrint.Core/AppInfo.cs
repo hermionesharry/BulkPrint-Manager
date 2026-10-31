@@ -57,4 +57,8 @@ public static class AppInfo
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), DataFolderName);
 
     public static string LogDir => Path.Combine(LocalDataDir, "Logs");
+
+    /// <summary>Documents\BulkPrint Output — default folder for saved print output.</summary>
+    public static string DefaultOutputFolder =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "BulkPrint Output");
 }

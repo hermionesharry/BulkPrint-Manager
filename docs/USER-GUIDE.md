@@ -79,6 +79,18 @@ before printing or previewing. Their page count appears after the first conversi
   - *Max jobs waiting at printer*: BulkPrint Manager waits when the printer already has this many jobs (default 20).
   - *Let the printer make the copies*: faster, but leave it off if your printer ignores copy settings.
 
+- **Save print output (On/Off):** for printers that create files instead of paper, such as
+  *Microsoft Print to PDF*. **On** (default): every document is saved automatically as its own file
+  (for example `Invoice 12.docx` becomes `Invoice 12.pdf`) in the folder shown, by default
+  *Documents\BulkPrint Output*. Existing files are never overwritten (`Invoice 12 (2).pdf`), and a CSV report
+  is saved next to them. Windows does **not** ask "Save Print Output As" for each document. **Off**: Windows asks
+  for a file name for every document. Paper printers are not affected. Use **Change folder…** and **Open folder**.
+- **Print without pop-ups** (on by default): Print All starts straight away and the whole batch runs in one go.
+  No confirmation, no questions and no report window. Password-protected PDFs that were not unlocked are skipped,
+  and if the printer reports a problem the batch pauses and says so in the status bar. The report is always
+  available from **Print > Show last report**. Turn this off (here or in the **Settings** menu) if you want to
+  confirm each batch and see the report automatically.
+
 **Profiles** save all of these settings (and the printer) under a name such as *A4 Duplex B&W*:
 **Save Profile** and **Load Profile** on the toolbar. Load Profile also lets you delete profiles.
 

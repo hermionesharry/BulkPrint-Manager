@@ -106,6 +106,25 @@ public sealed class PrintEngine
     {
         var printerName = global.PrinterName ?? throw new InvalidOperationException("No printer is selected.");
         var report = new BatchReport { PrinterName = printerName, StartTime = DateTime.Now };
+
+        // Save Print Output: for printers that write files (Microsoft Print to PDF and similar), name and
+        // save every document automatically so Windows never asks "Save Print Output As".
+        OutputNaming? naming = null;
+        string? extension = null;
+        try { extension = _printers.GetFileOutputExtension(printerName); }
+        catch (Exception ex) { _log.Warn("Could not check the printer type: " + ex.Message); }
+        if (extension is not null && global.SaveOutput)
+        {
+            var folder = global.EffectiveOutputFolder;
+            try { Directory.CreateDirectory(folder); }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"The output folder \"{folder}\" cannot be used: {ex.Message}", ex);
+            }
+            naming = new OutputNaming(folder, extension);
+            report.OutputFolder = folder;
+            _log.Info($"Saving print output to '{folder}' as {extension} files.");
+        }
         var reported = new HashSet<DocumentItem>();
         void Add(DocumentItem item, PrintStatus status, int pages, string message, TimeSpan duration)
         {
@@ -183,7 +202,9 @@ public sealed class PrintEngine
                 var sink = new Sink(item, () => Interlocked.Increment(ref pagesSent), () => Report(item.FileName));
                 using var skipCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 lock (_skipLock) _skipCurrent = skipCts;
-                bool separator = !first && global.Separator != SeparatorMode.None;
+                // Separator pages make no sense inside separately saved files.
+                bool separator = !first && global.Separator != SeparatorMode.None && naming is null;
+                string? outputFile = naming?.Next(item.FileName);
                 first = false;
 
                 try
@@ -191,10 +212,16 @@ public sealed class PrintEngine
                     item.PagesSent = 0;
                     item.StatusDetail = "";
                     Report(item.FileName);
-                    var outcome = await Task.Run(() => _printer.Print(item, options, global, separator, sink, skipCts.Token), CancellationToken.None);
+                    var outcome = await Task.Run(() => _printer.Print(item, options, global, separator, outputFile, sink, skipCts.Token), CancellationToken.None);
                     item.Status = PrintStatus.Printed;
-                    item.StatusDetail = outcome.Warning ?? $"{outcome.PagesSent} page{(outcome.PagesSent == 1 ? "" : "s")} sent at {DateTime.Now:HH:mm:ss}";
-                    Add(item, PrintStatus.Printed, outcome.PagesSent, outcome.Warning ?? "", docTimer.Elapsed);
+                    var saved = outcome.OutputFile ?? outputFile;
+                    var savedNote = saved is null ? null : $"Saved as {saved}";
+                    item.StatusDetail = string.Join(" ", new[] { savedNote, outcome.Warning }.Where(s => !string.IsNullOrEmpty(s)))
+                                        is { Length: > 0 } detail
+                        ? detail
+                        : $"{outcome.PagesSent} page{(outcome.PagesSent == 1 ? "" : "s")} sent at {DateTime.Now:HH:mm:ss}";
+                    Add(item, PrintStatus.Printed, outcome.PagesSent,
+                        string.Join(" ", new[] { savedNote, outcome.Warning }.Where(s => !string.IsNullOrEmpty(s))), docTimer.Elapsed);
                     _log.Info($"Printed '{item.Path}' ({outcome.PagesSent} pages).");
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)

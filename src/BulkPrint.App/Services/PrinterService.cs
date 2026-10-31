@@ -84,6 +84,46 @@ internal sealed class PrinterService : IPrinterService
         }
     }
 
+    public string? GetFileOutputExtension(string printerName)
+    {
+        if (!OpenPrinter(printerName, out var handle, IntPtr.Zero)) return null;
+        try
+        {
+            GetPrinter(handle, 2, IntPtr.Zero, 0, out int needed);
+            if (needed <= 0) return null;
+            var buffer = Marshal.AllocHGlobal(needed);
+            try
+            {
+                if (!GetPrinter(handle, 2, buffer, needed, out _)) return null;
+                var info = Marshal.PtrToStructure<PRINTER_INFO_2>(buffer);
+                return OutputExtension(info.pDriverName ?? "", info.pPortName ?? "", printerName);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(buffer);
+            }
+        }
+        finally
+        {
+            ClosePrinter(handle);
+        }
+    }
+
+    /// <summary>Recognises printers that save a file instead of printing on paper.</summary>
+    internal static string? OutputExtension(string driver, string port, string printerName)
+    {
+        bool prompts = port.Contains("PORTPROMPT", StringComparison.OrdinalIgnoreCase) ||
+                       port.Equals("FILE:", StringComparison.OrdinalIgnoreCase);
+        if (driver.Contains("Print To PDF", StringComparison.OrdinalIgnoreCase) ||
+            (prompts && (driver.Contains("PDF", StringComparison.OrdinalIgnoreCase) || printerName.Contains("PDF", StringComparison.OrdinalIgnoreCase))))
+            return ".pdf";
+        if (driver.Contains("XPS Document Writer", StringComparison.OrdinalIgnoreCase))
+            return ".oxps";
+        if (port.Equals("FILE:", StringComparison.OrdinalIgnoreCase))
+            return ".prn";
+        return null;
+    }
+
     private static PrinterStatusInfo Describe(uint status, uint attributes, int jobs)
     {
         if ((attributes & PRINTER_ATTRIBUTE_WORK_OFFLINE) != 0)

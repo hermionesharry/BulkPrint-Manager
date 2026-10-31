@@ -70,7 +70,7 @@ public sealed class MainViewModel : ObservableObject
         {
             IsPaused = true;
             StatusMessage = message;
-            _dialogs.Warning("Printing paused", message);
+            if (!PrintWithoutPopups) _dialogs.Warning("Printing paused", message);
         });
         _engine.Waiting += message => _ui.Post(() => StatusMessage = message);
 
@@ -111,6 +111,8 @@ public sealed class MainViewModel : ObservableObject
         SaveQueueCommand = new RelayCommand(SaveQueue, () => Documents.Count > 0);
         OpenQueueCommand = new AsyncRelayCommand(OpenQueueAsync, () => CanEditQueue, OnError);
         ShowLastReportCommand = new RelayCommand(() => { if (_lastReport is not null) ShowReport(_lastReport); }, () => _lastReport is not null && !IsPrinting);
+        BrowseOutputFolderCommand = new RelayCommand(BrowseOutputFolder, () => !IsPrinting);
+        OpenOutputFolderCommand = new RelayCommand(() => _dialogs.OpenFolder(Global.EffectiveOutputFolder));
         AboutCommand = new RelayCommand(() => _dialogs.ShowAbout());
         OpenLogFolderCommand = new RelayCommand(() => _dialogs.OpenFolder(_store.Paths.LogDir));
     }
@@ -135,6 +137,7 @@ public sealed class MainViewModel : ObservableObject
     public IReadOnlyList<Choice<PrintQuality>> QualityChoices { get; } = Choices<PrintQuality>(EnumLabels.Of);
     public IReadOnlyList<Choice<SeparatorMode>> SeparatorChoices { get; } = Choices<SeparatorMode>(EnumLabels.Of);
     public IReadOnlyList<Choice<SortMode>> SortChoices { get; } = Choices<SortMode>(EnumLabels.Of);
+    public IReadOnlyList<Choice<bool>> OnOffChoices { get; } = new[] { new Choice<bool>(true, "On"), new Choice<bool>(false, "Off") };
 
     public static IReadOnlyList<Choice<T>> Choices<T>(Func<T, string> label) where T : struct, Enum =>
         Enum.GetValues<T>().Select(v => new Choice<T>(v, label(v))).ToList();
@@ -200,6 +203,38 @@ public sealed class MainViewModel : ObservableObject
     }
 
     public event Action<bool>? ThemeChanged;
+
+    /// <summary>Print without pop-ups: the whole batch runs in one go with no confirmation, questions or report window.</summary>
+    public bool PrintWithoutPopups
+    {
+        get => _settings.PrintWithoutPopups;
+        set
+        {
+            if (_settings.PrintWithoutPopups == value) return;
+            _settings.PrintWithoutPopups = value;
+            OnPropertyChanged();
+            SaveSettings();
+        }
+    }
+
+    private string? _fileOutputExtension;
+
+    /// <summary>True when the selected printer writes files (for example Microsoft Print to PDF).</summary>
+    public bool PrinterSavesToFile => _fileOutputExtension is not null;
+
+    public string SaveOutputHint => PrinterSavesToFile
+        ? Global.SaveOutput
+            ? $"On: each document is saved automatically as its own {_fileOutputExtension!.TrimStart('.').ToUpperInvariant()} file. Windows will not ask for file names."
+            : "Off: Windows will ask \"Save Print Output As\" for every document."
+        : "Used with printers that save files, such as Microsoft Print to PDF. Paper printers are not affected.";
+
+    private void BrowseOutputFolder()
+    {
+        var folder = _dialogs.PickFolder(Global.EffectiveOutputFolder, out _, false);
+        if (folder is null) return;
+        Global.OutputFolder = folder;
+        StatusMessage = $"Print output will be saved in {folder}";
+    }
 
     public string? GlobalRangeError { get => _globalRangeError; private set => Set(ref _globalRangeError, value); }
 
@@ -311,6 +346,8 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand SaveQueueCommand { get; }
     public AsyncRelayCommand OpenQueueCommand { get; }
     public RelayCommand ShowLastReportCommand { get; }
+    public RelayCommand BrowseOutputFolderCommand { get; }
+    public RelayCommand OpenOutputFolderCommand { get; }
     public RelayCommand AboutCommand { get; }
     public RelayCommand OpenLogFolderCommand { get; }
 
@@ -418,16 +455,19 @@ public sealed class MainViewModel : ObservableObject
         _capsCts?.Cancel();
         var cts = _capsCts = new CancellationTokenSource();
         PrinterStatusText = "Reading printer settings…";
-        var (caps, status) = await Task.Run(() =>
+        var (caps, status, extension) = await Task.Run(() =>
         {
-            try { return (_printers.GetCapabilities(printerName), _printers.GetStatus(printerName)); }
+            try { return (_printers.GetCapabilities(printerName), _printers.GetStatus(printerName), _printers.GetFileOutputExtension(printerName)); }
             catch (Exception ex)
             {
                 _log.Error($"Could not read printer '{printerName}'.", ex);
-                return (PrinterCapabilities.None, new PrinterStatusInfo(false, true, "This printer could not be read", 0));
+                return (PrinterCapabilities.None, new PrinterStatusInfo(false, true, "This printer could not be read", 0), (string?)null);
             }
         });
         if (cts.IsCancellationRequested) return;
+        _fileOutputExtension = extension;
+        OnPropertyChanged(nameof(PrinterSavesToFile));
+        OnPropertyChanged(nameof(SaveOutputHint));
 
         var paper = Global.PaperSizeName;
         var source = Global.PaperSourceName;
@@ -550,6 +590,11 @@ public sealed class MainViewModel : ObservableObject
     {
         int office = items.Count(i => FileTypes.NeedsOfficeEngine(i.Kind));
         if (office == 0) return;
+        if (!_inspector.OfficeEngineAvailable && PrintWithoutPopups)
+        {
+            StatusMessage = $"{office} Word, Excel or PowerPoint file(s) cannot be printed because the Office engine is not installed.";
+            return;
+        }
         if (!_inspector.OfficeEngineAvailable)
         {
             _dialogs.Warning("Office documents cannot be printed",
@@ -559,7 +604,7 @@ public sealed class MainViewModel : ObservableObject
                 "Reinstall BulkPrint Manager using the full installer to print Office documents.");
             return;
         }
-        if (_settings.OfficeNoticeShown) return;
+        if (_settings.OfficeNoticeShown || PrintWithoutPopups) return;
         _settings.OfficeNoticeShown = true;
         SaveSettings();
         _dialogs.Info("About Office documents",
@@ -612,7 +657,12 @@ public sealed class MainViewModel : ObservableObject
         RefreshCommands();
 
         var locked = items.Where(i => i.Status == PrintStatus.NeedsPassword).ToList();
-        if (promptForPasswords && locked.Count > 0 && !IsPrinting)
+        if (promptForPasswords && locked.Count > 0 && !IsPrinting && PrintWithoutPopups)
+        {
+            StatusMessage = $"{locked.Count} password-protected PDF{(locked.Count == 1 ? "" : "s")} will be skipped. " +
+                            "To print them, use Settings > Unlock password-protected files.";
+        }
+        else if (promptForPasswords && locked.Count > 0 && !IsPrinting)
         {
             if (_dialogs.Confirm("Password-protected documents",
                     $"{locked.Count} PDF document{(locked.Count == 1 ? " is" : "s are")} password-protected.\n\nEnter the password now?\n" +
@@ -860,13 +910,16 @@ public sealed class MainViewModel : ObservableObject
     private void OnGlobalChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(GlobalPrintSettings.PrinterName)) OnPropertyChanged(nameof(SelectedPrinter));
+        if (e.PropertyName == nameof(GlobalPrintSettings.SaveOutput)) OnPropertyChanged(nameof(SaveOutputHint));
         foreach (var d in Documents)
             if (!d.HasCustomSettings) d.NotifyEffectiveChanged();
         ValidateGlobal();
         if (e.PropertyName is not nameof(GlobalPrintSettings.DelayBetweenDocumentsSeconds)
             and not nameof(GlobalPrintSettings.MaxJobsInPrinterQueue)
             and not nameof(GlobalPrintSettings.Separator)
-            and not nameof(GlobalPrintSettings.UsePrinterCopies))
+            and not nameof(GlobalPrintSettings.UsePrinterCopies)
+            and not nameof(GlobalPrintSettings.SaveOutput)
+            and not nameof(GlobalPrintSettings.OutputFolder))
             RefreshThumbnail();
         SaveSettings();
     }
@@ -1001,8 +1054,9 @@ public sealed class MainViewModel : ObservableObject
             return;
         }
 
+        bool quiet = PrintWithoutPopups;
         var locked = Documents.Where(d => d.Status == PrintStatus.NeedsPassword).ToList();
-        if (locked.Count > 0 && !skipConfirmation)
+        if (locked.Count > 0 && !skipConfirmation && !quiet)
         {
             var answer = _dialogs.AskYesNoCancel("Password-protected documents",
                 $"{locked.Count} document{(locked.Count == 1 ? " needs" : "s need")} a password.\n\n" +
@@ -1012,6 +1066,11 @@ public sealed class MainViewModel : ObservableObject
         }
 
         var printable = Documents.Where(PrintEngine.IsPrintable).ToList();
+        if (printable.Count == 0 && quiet)
+        {
+            StatusMessage = "Nothing to print: every document has already been printed, skipped or failed. Use Print > Reset statuses to print again.";
+            return;
+        }
         if (printable.Count == 0)
         {
             bool anyDone = Documents.Any(d => d.Status is PrintStatus.Printed or PrintStatus.Skipped or PrintStatus.Failed);
@@ -1028,7 +1087,7 @@ public sealed class MainViewModel : ObservableObject
         });
         ApplyStatus(status);
 
-        if (!skipConfirmation)
+        if (!skipConfirmation && !quiet)
         {
             int copies = printable.Sum(p => p.EffectiveOptions.Copies);
             var message = $"Print {printable.Count:N0} document{(printable.Count == 1 ? "" : "s")} ({copies:N0} cop{(copies == 1 ? "y" : "ies")} in total) to:\n\n{Global.PrinterName}";
@@ -1067,6 +1126,28 @@ public sealed class MainViewModel : ObservableObject
         EtaText = "";
         StatusMessage = report.Headline;
         if (!report.WasCancelled) ProgressPercent = 100;
+
+        if (report.OutputFolder is not null)
+        {
+            // Keep a copy of the report next to the saved files.
+            try
+            {
+                var csv = Path.Combine(report.OutputFolder, $"BulkPrint report {report.StartTime:yyyy-MM-dd HHmmss}.csv");
+                report.SaveCsv(csv);
+                StatusMessage = $"{report.Headline}. Files saved in {report.OutputFolder}";
+            }
+            catch (Exception ex)
+            {
+                _log.Warn("Could not save the report next to the output: " + ex.Message);
+            }
+        }
+
+        if (quiet)
+        {
+            if (report.Failed > 0) StatusMessage += " · See Print > Show last report for the reasons.";
+            RefreshCommands();
+            return;
+        }
         ShowReport(report);
     }
 

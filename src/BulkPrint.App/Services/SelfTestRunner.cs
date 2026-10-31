@@ -129,7 +129,7 @@ internal static class SelfTestRunner
 
                 if (pdfPrinter is not null)
                 {
-                    var outcome = printer.Print(item, item.EffectiveOptions, global, false, new NullSink(), CancellationToken.None);
+                    var outcome = printer.Print(item, item.EffectiveOptions, global, false, null, new NullSink(), CancellationToken.None);
                     var target = printer.OutputFileOverride!(item);
                     bool written = await WaitForFileAsync(target, TimeSpan.FromSeconds(60));
                     Check(outcome.PagesSent > 0 && written,
@@ -154,15 +154,13 @@ internal static class SelfTestRunner
                 b.AttachGlobal(global);
                 a.Overrides = new DocumentPrintOptions { PageSelection = PageSelectionMode.Range, PageRange = "2-3", Copies = 2, Collate = true };
                 b.Overrides = new DocumentPrintOptions { PageSelection = PageSelectionMode.Odd };
-                int n = 0;
-                var batchPrinter = new DocumentPrinter(factory, log)
-                {
-                    OutputFileOverride = _ => Path.Combine(output, $"batch_{Interlocked.Increment(ref n)}.pdf"),
-                };
+                var batchPrinter = new DocumentPrinter(factory, log);
                 var engine = new PrintEngine(batchPrinter, printerService, log);
                 var batchGlobal = global.CloneGlobal();
                 batchGlobal.Separator = SeparatorMode.FileNamePage;
                 batchGlobal.MaxJobsInPrinterQueue = 0;
+                batchGlobal.SaveOutput = true;
+                batchGlobal.OutputFolder = Path.Combine(output, "saved-output");
                 var report = await engine.RunAsync(new[] { a, b }, batchGlobal, () => Task.CompletedTask, null, CancellationToken.None);
                 Check(report.Printed == 2, $"Batch engine printed both documents (printed {report.Printed}, failed {report.Failed})");
                 Check(report.Entries[0].PagesSent == 4, $"Page range 2-3 with 2 collated copies sends 4 pages (sent {report.Entries[0].PagesSent})");
@@ -170,6 +168,11 @@ internal static class SelfTestRunner
                 report.SavePdf(Path.Combine(output, "batch-report.pdf"));
                 report.SaveCsv(Path.Combine(output, "batch-report.csv"));
                 Check(File.Exists(Path.Combine(output, "batch-report.pdf")), "Report exported to PDF and CSV");
+                Check(printerService.GetFileOutputExtension(pdfPrinter) == ".pdf", "Microsoft Print to PDF is recognised as a save-to-file printer");
+                var savedName = Path.GetFileNameWithoutExtension(pdfSample);
+                bool savedA = await WaitForFileAsync(Path.Combine(batchGlobal.OutputFolder, savedName + ".pdf"), TimeSpan.FromSeconds(60));
+                bool savedB = await WaitForFileAsync(Path.Combine(batchGlobal.OutputFolder, savedName + " (2).pdf"), TimeSpan.FromSeconds(60));
+                Check(savedA && savedB, "Save Print Output saved both documents automatically, with no Save As dialog");
             }
             catch (Exception ex)
             {

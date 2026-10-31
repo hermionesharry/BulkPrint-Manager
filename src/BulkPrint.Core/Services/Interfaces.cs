@@ -26,9 +26,15 @@ public interface IPrinterService
     string? GetDefaultPrinterName();
     PrinterCapabilities GetCapabilities(string printerName);
     PrinterStatusInfo GetStatus(string printerName);
+
+    /// <summary>
+    /// For printers that save to a file instead of paper (Microsoft Print to PDF, XPS Document Writer,
+    /// FILE: port) returns the file extension, for example ".pdf". Returns null for real printers.
+    /// </summary>
+    string? GetFileOutputExtension(string printerName);
 }
 
-public sealed record PrintOutcome(int PagesSent, string? Warning = null);
+public sealed record PrintOutcome(int PagesSent, string? Warning = null, string? OutputFile = null);
 
 /// <summary>Reports progress of one document back to the engine.</summary>
 public interface IPrintProgressSink
@@ -45,6 +51,7 @@ public interface IDocumentPrinter
         DocumentPrintOptions options,
         GlobalPrintSettings global,
         bool separatorBefore,
+        string? outputFile,
         IPrintProgressSink progress,
         CancellationToken cancellationToken);
 }

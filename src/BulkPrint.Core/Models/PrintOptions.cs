@@ -101,6 +101,8 @@ public sealed class GlobalPrintSettings : DocumentPrintOptions
     private int _delayBetweenDocumentsSeconds;
     private int _maxJobsInPrinterQueue = 20;
     private bool _usePrinterCopies;
+    private bool _saveOutput = true;
+    private string? _outputFolder;
 
     public string? PrinterName { get => _printerName; set => Set(ref _printerName, value); }
     public string? PaperSizeName { get => _paperSizeName; set => Set(ref _paperSizeName, value); }
@@ -127,6 +129,26 @@ public sealed class GlobalPrintSettings : DocumentPrintOptions
     /// </summary>
     public bool UsePrinterCopies { get => _usePrinterCopies; set => Set(ref _usePrinterCopies, value); }
 
+    /// <summary>
+    /// Save Print Output (On/Off). When On and the printer saves to a file (for example
+    /// "Microsoft Print to PDF"), each document is saved automatically into <see cref="OutputFolder"/>
+    /// with its own name, so Windows never asks "Save Print Output As" for every document.
+    /// </summary>
+    public bool SaveOutput { get => _saveOutput; set => Set(ref _saveOutput, value); }
+
+    /// <summary>Folder for saved print output. Null or empty means Documents\BulkPrint Output.</summary>
+    public string? OutputFolder
+    {
+        get => _outputFolder;
+        set
+        {
+            if (Set(ref _outputFolder, value)) OnPropertyChanged(nameof(EffectiveOutputFolder));
+        }
+    }
+
+    [JsonIgnore]
+    public string EffectiveOutputFolder => string.IsNullOrWhiteSpace(OutputFolder) ? AppInfo.DefaultOutputFolder : OutputFolder!;
+
     public GlobalPrintSettings CloneGlobal()
     {
         var g = new GlobalPrintSettings();
@@ -145,5 +167,7 @@ public sealed class GlobalPrintSettings : DocumentPrintOptions
         DelayBetweenDocumentsSeconds = other.DelayBetweenDocumentsSeconds;
         MaxJobsInPrinterQueue = other.MaxJobsInPrinterQueue;
         UsePrinterCopies = other.UsePrinterCopies;
+        SaveOutput = other.SaveOutput;
+        OutputFolder = other.OutputFolder;
     }
 }

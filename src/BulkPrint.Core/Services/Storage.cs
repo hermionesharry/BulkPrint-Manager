@@ -12,6 +12,9 @@ public sealed class AppSettings
     public bool DarkTheme { get; set; }
     public int OfficeConversionTimeoutSeconds { get; set; } = 180;
     public bool OfficeNoticeShown { get; set; }
+
+    /// <summary>Print without pop-ups: no confirmation, no report window, no questions during the batch.</summary>
+    public bool PrintWithoutPopups { get; set; } = true;
 }
 
 public sealed class PrintProfile

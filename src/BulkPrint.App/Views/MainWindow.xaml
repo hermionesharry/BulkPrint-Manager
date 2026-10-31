@@ -75,6 +75,8 @@
                 <MenuItem Header="_Unlock password-protected files…" Command="{Binding UnlockCommand}" />
                 <Separator />
                 <MenuItem Header="Include _subfolders when adding a folder" IsCheckable="True" IsChecked="{Binding IncludeSubfolders}" />
+                <MenuItem Header="Print _without pop-ups" IsCheckable="True" IsChecked="{Binding PrintWithoutPopups}" />
+                <MenuItem Header="Open print _output folder" Command="{Binding OpenOutputFolderCommand}" />
                 <MenuItem Header="Dar_k theme" IsCheckable="True" IsChecked="{Binding DarkTheme}" />
             </MenuItem>
             <MenuItem Header="_Help">
@@ -488,6 +490,27 @@
                                 <TextBlock Text="Print quality" Style="{StaticResource FieldLabel}" />
                                 <ComboBox ItemsSource="{Binding QualityChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
                                           SelectedValue="{Binding Global.Quality}" AutomationProperties.Name="Print quality" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Save print output and no pop-ups -->
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Save print output" Style="{StaticResource CardTitle}" />
+                                <ComboBox ItemsSource="{Binding OnOffChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                          SelectedValue="{Binding Global.SaveOutput}" AutomationProperties.Name="Save print output" />
+                                <TextBlock Text="{Binding SaveOutputHint}" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
+                                <StackPanel Visibility="{Binding Global.SaveOutput, Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="Save files in" Style="{StaticResource FieldLabel}" />
+                                    <TextBox Text="{Binding Global.EffectiveOutputFolder, Mode=OneWay}" IsReadOnly="True"
+                                             ToolTip="{Binding Global.EffectiveOutputFolder}" AutomationProperties.Name="Output folder" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                        <Button Content="Change folder…" Style="{StaticResource SecondaryButton}" Command="{Binding BrowseOutputFolderCommand}" Padding="10,5" Margin="0,0,8,0" />
+                                        <Button Content="Open folder" Style="{StaticResource SecondaryButton}" Command="{Binding OpenOutputFolderCommand}" Padding="10,5" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <CheckBox Content="Print without pop-ups (whole batch in one go)" IsChecked="{Binding PrintWithoutPopups}" Margin="0,14,0,0"
+                                          ToolTip="No confirmation, no questions and no report window. Progress and results are shown in the queue and status bar. The report is still available from Print > Show last report." />
                             </StackPanel>
                         </Border>
 

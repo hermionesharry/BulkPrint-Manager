@@ -332,6 +332,45 @@ await Test("Print engine: separators between documents only", async () =>
     Check(printer.SeparatorFlags.SequenceEqual(new[] { false, true, true }), "separator before 2nd and 3rd");
 });
 
+await Test("Save Print Output: automatic file names, no separators, report folder", async () =>
+{
+    var tmp = Directory.CreateTempSubdirectory("bpm-out-");
+    try
+    {
+        File.WriteAllText(Path.Combine(tmp.FullName, "invoice.pdf"), "existing");
+        var docs = new[]
+        {
+            new DocumentItem("/tmp/a/invoice.docx"), new DocumentItem("/tmp/b/invoice.pdf"), new DocumentItem("/tmp/c/notes.txt"),
+        };
+        var global = new GlobalPrintSettings { PrinterName = "Microsoft Print to PDF", OutputFolder = tmp.FullName, Separator = SeparatorMode.BlankPage };
+        var printer = new FakePrinter();
+        var engine = new PrintEngine(printer, new FakePrinterService { FileExtension = ".pdf" }, NullLogger.Instance);
+        var report = await engine.RunAsync(docs, global, () => Task.CompletedTask, null, CancellationToken.None);
+        var names = printer.OutputFiles.Select(f => Path.GetFileName(f!)).ToList();
+        Check(names.SequenceEqual(new[] { "invoice (2).pdf", "invoice (3).pdf", "notes.pdf" }), "unique output names: " + string.Join(", ", names));
+        Check(printer.OutputFiles.All(f => Path.GetDirectoryName(f) == tmp.FullName), "saved in chosen folder");
+        Check(printer.SeparatorFlags.All(f => !f), "no separator pages inside saved files");
+        Equal(tmp.FullName, report.OutputFolder, "report knows the output folder");
+        Check(docs[0].StatusDetail.Contains("Saved as"), "status shows where it was saved");
+
+        var off = new FakePrinter();
+        global.SaveOutput = false;
+        await new PrintEngine(off, new FakePrinterService { FileExtension = ".pdf" }, NullLogger.Instance)
+            .RunAsync(new[] { new DocumentItem("/tmp/x.pdf") }, global, () => Task.CompletedTask, null, CancellationToken.None);
+        Check(off.OutputFiles.All(f => f is null), "Save Print Output Off leaves naming to Windows");
+
+        var paper = new FakePrinter();
+        global.SaveOutput = true;
+        await new PrintEngine(paper, new FakePrinterService(), NullLogger.Instance)
+            .RunAsync(new[] { new DocumentItem("/tmp/y.pdf") }, global, () => Task.CompletedTask, null, CancellationToken.None);
+        Check(paper.OutputFiles.All(f => f is null), "paper printers are not affected");
+        Check(new GlobalPrintSettings().SaveOutput, "Save Print Output is On by default");
+        Check(new AppSettings().PrintWithoutPopups, "print without pop-ups is on by default");
+        Check(new GlobalPrintSettings().EffectiveOutputFolder.EndsWith("BulkPrint Output"), "default output folder");
+    }
+    finally { tmp.Delete(true); }
+});
+
 await Test("Print engine: pause, resume and cancel", async () =>
 {
     var docs = Enumerable.Range(1, 6).Select(i => new DocumentItem($"/tmp/p{i}.pdf")).ToList();
@@ -437,8 +476,10 @@ sealed class FakePrinter : IDocumentPrinter
     public bool Cancellable { get; set; }
     public int PagesPerDoc { get; set; } = 2;
 
+    public List<string?> OutputFiles { get; } = new();
+
     public PrintOutcome Print(DocumentItem item, DocumentPrintOptions options, GlobalPrintSettings global, bool separatorBefore,
-        IPrintProgressSink progress, CancellationToken ct)
+        string? outputFile, IPrintProgressSink progress, CancellationToken ct)
     {
         progress.SetStatus(PrintStatus.Rendering);
         if (DelayMs > 0)
@@ -454,6 +495,7 @@ sealed class FakePrinter : IDocumentPrinter
         {
             Printed.Add(item.FileName);
             SeparatorFlags.Add(separatorBefore);
+            OutputFiles.Add(outputFile);
         }
         return new PrintOutcome(PagesPerDoc);
     }
@@ -462,6 +504,8 @@ sealed class FakePrinter : IDocumentPrinter
 sealed class FakePrinterService : IPrinterService
 {
     public Queue<PrinterStatusInfo> Sequence { get; } = new();
+    public string? FileExtension { get; set; }
+    public string? GetFileOutputExtension(string printerName) => FileExtension;
     public IReadOnlyList<string> GetPrinterNames() => new[] { "Fake" };
     public string? GetDefaultPrinterName() => "Fake";
     public PrinterCapabilities GetCapabilities(string printerName) =>
