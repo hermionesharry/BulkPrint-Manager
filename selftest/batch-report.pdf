@@ -1,0 +1,54 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 1145 >>
+stream
+BT /F2 16 Tf 50 767.89 Td (BulkPrint Manager \227 Print Report) Tj ET
+BT /F2 10.5 Tf 50 752.67 Td (Batch complete: 2 of 2 documents printed) Tj ET
+BT /F1 10.5 Tf 50 729.44 Td (Printer: Microsoft Print to PDF) Tj ET
+BT /F1 10.5 Tf 50 714.22 Td (Started: 31 Oct 2026, 22:33:31) Tj ET
+BT /F1 10.5 Tf 50 698.99 Td (Finished: 31 Oct 2026, 22:33:34  \(duration 3 s\)) Tj ET
+BT /F1 10.5 Tf 50 683.77 Td (Documents: 2  \267  Printed: 2  \267  Skipped: 0  \267  Failed: 0) Tj ET
+BT /F1 10.5 Tf 50 668.54 Td (Pages sent to printer: 6) Tj ET
+BT /F1 10.5 Tf 50 653.32 Td (Print output saved in:) Tj ET
+BT /F1 10.5 Tf 50 638.09 Td (D:\\a\\BulkPrint-Manager\\BulkPrint-Manager\\build\\test-results\\selftest\\saved-output) Tj ET
+BT /F2 10.5 Tf 50 614.87 Td (All documents) Tj ET
+BT /F3 8.5 Tf 50 602.54 Td (   1. sample-report.pdf                                             Printed             4 pages) Tj ET
+BT /F3 8.5 Tf 50 590.22 Td (   2. sample-report.pdf                                             Printed             2 pages) Tj ET
+BT /F1 8.5 Tf 50 569.89 Td (Report created by BulkPrint Manager 1.0.0) Tj ET
+BT /F1 8 Tf 50 30 Td (Page 1 of 1) Tj ET
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000218 00000 n 
+0000000320 00000 n 
+0000000415 00000 n 
+0000000567 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+1763
+%%EOF

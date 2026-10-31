@@ -1,0 +1,11 @@
+﻿File name,Folder path,Status,Pages sent,Duration (s),Message
+sample-report.pdf,D:\a\BulkPrint-Manager\BulkPrint-Manager\build\test-results\samples\sample-report.pdf,Printed,4,2,Saved as D:\a\BulkPrint-Manager\BulkPrint-Manager\build\test-results\selftest\saved-output\sample-report.pdf
+sample-report.pdf,D:\a\BulkPrint-Manager\BulkPrint-Manager\build\test-results\samples\sample-report.pdf,Printed,2,1,Saved as D:\a\BulkPrint-Manager\BulkPrint-Manager\build\test-results\selftest\saved-output\sample-report (2).pdf
+
+Printer: Microsoft Print to PDF
+"Started: 31 Oct 2026, 22:33:31"
+"Finished: 31 Oct 2026, 22:33:34  (duration 3 s)"
+Documents: 2  ·  Printed: 2  ·  Skipped: 0  ·  Failed: 0
+Pages sent to printer: 6
+Print output saved in: D:\a\BulkPrint-Manager\BulkPrint-Manager\build\test-results\selftest\saved-output
+Report created by BulkPrint Manager 1.0.0

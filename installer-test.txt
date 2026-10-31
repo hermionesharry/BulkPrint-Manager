@@ -1,0 +1,83 @@
+PASS  Installer file exists
+Installer size: 353.7 MB, Company 'Harish Vaishnav                                             ', Copyright 'Copyright © 2026 Harish Vaishnav                                                                    '
+PASS  Installer file Company is Harish Vaishnav
+PASS  Silent install finished (exit code 0)
+PASS  Program installed to C:\Program Files\BulkPrint Manager
+PASS  License notices installed
+Office engine installed: True
+PASS  Start menu shortcut created
+PASS  Listed in Windows Installed apps
+Installed apps entry: 'BulkPrint Manager' version 1.0.0, publisher 'Harish Vaishnav'
+PASS  Installed apps publisher is Harish Vaishnav
+EXE properties: Product 'BulkPrint Manager', Company 'Harish Vaishnav', Description 'BulkPrint Manager — Bulk Document Printing', Copyright 'Copyright © 2026 Harish Vaishnav'
+PASS  EXE Company is Harish Vaishnav
+PASS  EXE Copyright names Harish Vaishnav
+PASS  Right-click menu registered for PDF
+PASS  Right-click menu registered for folders
+Printers: Microsoft XPS Document Writer; Microsoft Print to PDF
+PASS  Created legacy sample sample-letter.doc
+PASS  Created legacy sample sample-budget.xls
+PASS  Created legacy sample sample-slides.ppt
+  BulkPrint Manager 1.0.0 self-test, 2026-10-31 22:32:46
+  Windows: Microsoft Windows NT 10.0.20348.0, 64-bit process: True
+  Program folder: C:\Program Files\BulkPrint Manager\
+  
+  PASS  Credit text is "Designed and Developed by Harish Vaishnav"
+  EXE properties: Product='BulkPrint Manager', Company='Harish Vaishnav', Description='BulkPrint Manager — Bulk Document Printing', Copyright='Copyright © 2026 Harish Vaishnav', Version='1.0.0.0'
+  PASS  EXE Company is Harish Vaishnav
+  PASS  EXE Product name is BulkPrint Manager
+  PASS  EXE Copyright names Harish Vaishnav
+  PASS  EXE File description names BulkPrint Manager
+  PASS  THIRD-PARTY-NOTICES.txt is installed
+  Office engine: C:\Program Files\BulkPrint Manager\engine\program\soffice.exe
+  Printers: Microsoft Print to PDF; Microsoft XPS Document Writer
+  Using printer 'Microsoft Print to PDF', paper 'A4', status 'Ready'
+  
+  PASS  sample-budget.xls: preview rendered, 2 page(s)
+  PASS  sample-budget.xls: printed 2 page(s) to PDF in 10.0s
+  PASS  sample-budget.xlsx: preview rendered, 2 page(s)
+  PASS  sample-budget.xlsx: printed 2 page(s) to PDF in 4.3s
+  PASS  sample-chart.png: preview rendered, 1 page(s)
+  PASS  sample-chart.png: printed 1 page(s) to PDF in 0.6s
+  PASS  sample-corrupt.pdf: damaged file is flagged (This PDF could not be opened. It may be damaged or not a real PDF file.)
+  PASS  sample-data.csv: preview rendered, 2 page(s)
+  PASS  sample-data.csv: printed 2 page(s) to PDF in 0.8s
+  PASS  sample-fax.tiff: preview rendered, 2 page(s)
+  PASS  sample-fax.tiff: printed 2 page(s) to PDF in 0.8s
+  PASS  sample-letter.doc: preview rendered, 1 page(s)
+  PASS  sample-letter.doc: printed 1 page(s) to PDF in 4.0s
+  PASS  sample-letter.docx: preview rendered, 1 page(s)
+  PASS  sample-letter.docx: printed 1 page(s) to PDF in 4.2s
+  PASS  sample-memo.rtf: preview rendered, 1 page(s)
+  PASS  sample-memo.rtf: printed 1 page(s) to PDF in 4.2s
+  PASS  sample-notes.txt: preview rendered, 3 page(s)
+  PASS  sample-notes.txt: printed 3 page(s) to PDF in 0.8s
+  PASS  sample-photo.jpg: preview rendered, 1 page(s)
+  PASS  sample-photo.jpg: printed 1 page(s) to PDF in 0.6s
+  PASS  sample-protected.pdf: wrong password rejected
+  PASS  sample-protected.pdf: unlocked with the correct password
+  PASS  sample-protected.pdf: preview rendered, 3 page(s)
+  PASS  sample-protected.pdf: printed 3 page(s) to PDF in 2.1s
+  PASS  sample-report.pdf: preview rendered, 3 page(s)
+  PASS  sample-report.pdf: printed 3 page(s) to PDF in 2.0s
+  PASS  sample-scan.bmp: preview rendered, 1 page(s)
+  PASS  sample-scan.bmp: printed 1 page(s) to PDF in 0.5s
+  PASS  sample-slides.ppt: preview rendered, 3 page(s)
+  PASS  sample-slides.ppt: printed 3 page(s) to PDF in 4.6s
+  PASS  sample-slides.pptx: preview rendered, 3 page(s)
+  PASS  sample-slides.pptx: printed 3 page(s) to PDF in 4.8s
+  PASS  Batch engine printed both documents (printed 2, failed 0)
+  PASS  Page range 2-3 with 2 collated copies sends 4 pages (sent 4)
+  Batch report: Batch complete: 2 of 2 documents printed; pages 6
+  PASS  Report exported to PDF and CSV
+  PASS  Microsoft Print to PDF is recognised as a save-to-file printer
+  PASS  Save Print Output saved both documents automatically, with no Save As dialog
+  
+  Checks: 44, failures: 0
+PASS  Program self-test passed (exit code 0)
+PASS  Silent uninstall finished
+PASS  Program files removed by uninstall
+PASS  Right-click menu removed by uninstall
+PASS  Start menu shortcut removed
+
+Installer test finished with 0 failure(s).
